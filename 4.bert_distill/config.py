@@ -19,7 +19,7 @@ class Config():
         self.class_dict = {index: class_name.strip() for index, class_name in enumerate(open(self.class_data_path, 'r', encoding='utf-8'))}
 
         # 3.bert模型
-        self.bert_model_path = '../3.bert_fasttext/bert-base-chinese'  # 复用现有本地 BERT
+        self.bert_model_path = '../3.bert/bert-base-chinese'  # 复用现有本地 BERT
         self.bert_model = BertModel.from_pretrained(self.bert_model_path)  # Bert模型
         self.tokenizer = BertTokenizer.from_pretrained(self.bert_model_path)  # Tokenizer
         self.bert_config = BertConfig.from_pretrained(self.bert_model_path)  # Bert配置
@@ -39,7 +39,7 @@ class Config():
         self.device = torch.device('xpu' if torch.xpu.is_available() else 'cpu') # 设备
 
         # 5.模型保存路径
-        self.teacher_model_save_path = '../3.bert_fasttext/save_model/bert_model.pt'
+        self.teacher_model_save_path = '../3.bert/save_model/bert_model.pt'
 
         #学生模型保存路径
         self.distilled_model_save_path='./save_model/distilled_tmf_model.pt'

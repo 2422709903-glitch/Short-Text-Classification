@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .idea/
 .vscode/
+*/processed_data/
 
 # Model checkpoints and serialized estimators (download/train locally)
 *.pt
