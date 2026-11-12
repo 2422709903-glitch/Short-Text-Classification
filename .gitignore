@@ -1,0 +1,19 @@
+# Python cache and local tooling
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+
+# Model checkpoints and serialized estimators (download/train locally)
+*.pt
+*.pth
+*.pkl
+*.bin
+*.safetensors
+4.bert_distill/bert-base-chinese/
+
+# Local experiment outputs
+*/result/*.csv
+*/result/*.json
+*/result/*.txt
+
