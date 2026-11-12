@@ -81,7 +81,7 @@ def collate_fn(batch):
     #返回结果
     return input_ids, attention_mask, labels
 #4.定义Dataloader
-def build_dataloader():
+def build_dataloader(train_shuffle=True):
     #1.调用load_raw_data函数加载数据
     train_data_list=load_raw_data(config.train_data_path)
     test_data_list=load_raw_data(config.test_data_path)
@@ -94,7 +94,7 @@ def build_dataloader():
     train_dataloader = DataLoader(
         dataset=train_dataset,  # 指定数据集
         batch_size=config.batch_size,  # 批次大小
-        shuffle=True,  # 是否打乱数据(训练集需要打乱 验证集和测试集不需要)
+        shuffle=train_shuffle,  # 缓存 Teacher 目标时固定顺序，其余训练默认打乱
         collate_fn=collate_fn  # 数据整理函数
     )
     test_dataloader = DataLoader(

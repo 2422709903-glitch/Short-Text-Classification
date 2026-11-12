@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
             torch.save(
                 model.state_dict(),
-                config.model_save_path
+                config.balanced_model_save_path
             )
 
             print('当前模型已保存！')

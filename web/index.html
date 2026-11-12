@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>中文短文本分类实验台</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="中文短文本分类实验台首页">
+        <span class="brand-mark">文</span>
+        <span>短文本分类实验台</span>
+      </a>
+      <span class="topbar-note"><span class="status-dot"></span>本地模型服务</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">CHINESE SHORT TEXT CLASSIFICATION</p>
+      <h1>看看不同模型<br><span>会如何理解这句话</span></h1>
+      <p class="hero-copy">输入一条短文本，选择模型后并排查看预测类别和 26 个类别的概率分布。</p>
+    </section>
+
+    <section class="workspace">
+      <div class="input-panel panel">
+        <div class="section-heading">
+          <div><span class="step">01</span><h2>输入文本</h2></div>
+          <span id="char-count" class="muted">0 / 200</span>
+        </div>
+        <label class="sr-only" for="text-input">待分类文本</label>
+        <textarea id="text-input" maxlength="200" placeholder="例如：周末带孩子去海边看日落" rows="3"></textarea>
+        <div class="input-footer">
+          <span class="hint">建议输入简短、完整的一句话</span>
+          <div class="input-actions">
+            <button id="clear-input" class="secondary-button" type="button">清空</button>
+            <button id="predict-button" class="primary-button" type="button">
+              <span>开始预测</span><span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </div>
+        <div class="examples"><span>试试这些</span>
+          <button type="button" class="example-chip">周末带孩子去海边看日落</button>
+          <button type="button" class="example-chip">新款手机拍照效果怎么样</button>
+          <button type="button" class="example-chip">这首歌的现场版太好听了</button>
+        </div>
+      </div>
+
+      <aside class="model-panel panel">
+        <div class="section-heading">
+          <div><span class="step">02</span><h2>选择模型</h2></div>
+          <button id="select-available" class="text-button" type="button">选择可用模型</button>
+        </div>
+        <div id="model-list" class="model-list"><div class="loading-line">正在读取模型状态…</div></div>
+      </aside>
+    </section>
+
+    <section id="results-section" class="results-section" hidden>
+      <div class="results-heading">
+        <div><p class="eyebrow">MODEL PREDICTIONS</p><h2>预测结果</h2></div>
+        <span id="result-text" class="result-quote"></span>
+        <button id="export-results" class="secondary-button" type="button">导出 CSV</button>
+      </div>
+      <div id="agreement-summary" class="agreement-summary"></div>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+
+    <section id="history-section" class="history-section" hidden>
+      <div class="history-heading"><div><p class="eyebrow">RECENT RUNS</p><h2>最近预测</h2></div>
+        <button id="clear-history" class="text-button" type="button">清除记录</button></div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <footer><span>模型概率用于实验对比</span><span>26 个类别 · 中文短文本</span></footer>
+  </main>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>
+

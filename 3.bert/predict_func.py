@@ -14,7 +14,7 @@ config = Config()
 model = TMFModel().to(config.device)
 
 state_dict = torch.load(
-    config.model_save_path,
+    config.active_model_path,
     map_location=config.device
 )
 
@@ -61,5 +61,6 @@ def predict(input_data):
 
     # 2.8 返回结果
     return input_data
+
 
 

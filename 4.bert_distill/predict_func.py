@@ -12,7 +12,7 @@ config = Config()
 model = BiLstmModel().to(config.device)
 
 state_dict = torch.load(
-    config.distilled_model_save_path,
+    config.active_distilled_model_path,
     map_location=config.device
 )
 
