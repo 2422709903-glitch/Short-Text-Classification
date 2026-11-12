@@ -33,7 +33,7 @@ def load_raw_data(data_path):
             # 跳过空行
             if not line.strip():
                 continue
-            label,text=line.split('\t')
+            label,text=line.split('\t', 1)
 
             result_list.append((text,int(label)))
     return result_list
