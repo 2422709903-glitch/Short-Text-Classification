@@ -5,7 +5,7 @@
 ## 目录
 
 ```text
-1.data/                 数据集（需单独获取）
+1.data/data/            固定划分的数据集
 2.rf/                   TF-IDF + Random Forest
 3.bert_fasttext/        BERT 分类及 Web 服务/客户端
 4.bert_distill/         BERT Teacher 与 BiLSTM Student 蒸馏
@@ -13,16 +13,7 @@
 
 ## 数据
 
-数据格式为 `label<TAB>text`，类别从 0 开始，编号顺序对应 `class.txt`。固定划分为 train 105,000 条、dev 22,500 条、test 22,500 条。训练与评估沿用原划分，不重新切分。
-
-数据未包含在本仓库中。请从项目原数据目录获取数据，并按以下结构放置：
-
-```text
-1.data/data/train.txt
-1.data/data/dev.txt
-1.data/data/test.txt
-1.data/data/class.txt
-```
+数据格式为 `label<TAB>text`，类别从 0 开始，编号顺序对应 `1.data/data/class.txt`。固定划分为 train 105,000 条、dev 22,500 条、test 22,500 条。训练与评估沿用原划分，不重新切分。数据文件已包含在仓库的 `1.data/data/` 目录。
 
 ## 环境
 
