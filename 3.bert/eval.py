@@ -64,4 +64,8 @@ def eval_model(model,dev_data_loader,config):
         zero_division=0
     ))
     return accuracy, precision, recall, f1
+if __name__ == '__main__':
+    from config import Config
+    config=Config()
+    eval_model(config.model,config.dev_data_loader,config)
 
