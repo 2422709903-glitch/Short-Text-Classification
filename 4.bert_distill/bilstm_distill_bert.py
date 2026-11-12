@@ -21,18 +21,32 @@ config = Config()
 
 # 2.定义模型训练方式
 def distill_model():
+    # Intel XPU 上的 LSTM 曾报 allocator 错误；蒸馏的 Teacher 和 Student 统一在 CPU 运行。
+    config.device = torch.device('cpu')
     # 1 创建数据加载器
-    train_dataloader, test_dataloader, dev_dataloader = build_dataloader()
+    train_dataloader, test_dataloader, dev_dataloader = build_dataloader(train_shuffle=False)
     # 2 创建模型并放到指定设备上
     teacher_model = TMFModel().to(config.device)
-    teacher_model.load_state_dict(torch.load(config.teacher_model_save_path,map_location='cpu'))
+    teacher_model.load_state_dict(torch.load(config.teacher_model_save_path, map_location='cpu', weights_only=True))
+    teacher_model.requires_grad_(False)
     student_model = BiLstmModel().to(config.device)
+    teacher_model.eval()
+    teacher_model.requires_grad_(False)
+    best_f1, T, alpha = 0.0, 2, 0.7
+
+    # Teacher 固定不更新；样本顺序固定后只计算一次软目标，避免每轮重复跑 BERT。
+    teacher_log_probs_cache = []
+    with torch.no_grad():
+        for batch in tqdm(train_dataloader, desc='缓存 Teacher 软概率'):
+            input_ids, attention_mask, _ = batch
+            teacher_logits = teacher_model(input_ids.to(config.device), attention_mask.to(config.device))
+            teacher_log_probs_cache.append(F.log_softmax(teacher_logits / T, dim=-1).cpu())
+
     # 3 创建交叉熵损失函数
     cross_loss_fn = nn.CrossEntropyLoss()
     # 4 创建优化器
     optimizer = torch.optim.AdamW(student_model.parameters(), lr=config.learning_rate,foreach=False)
     # 5 外层循环控制轮次
-    best_f1, T, alpha = 0.0, 2, 0.7  # best_f1 --> 最佳的f1分数  T--> 蒸馏温度(平滑系数) alpha --> 权重比例
     for epoch in range(config.epochs):
         # 5.1 模型开启模型
         teacher_model.eval()
@@ -40,7 +54,7 @@ def distill_model():
         # 5.2 记录总损失、预测值、真实值
         total_loss, pred_labels, true_labels = 0.0, [], []
         # 5.3 开启批次训练
-        for batch_idx, batch in enumerate(tqdm(train_dataloader, desc='模型蒸馏')):
+        for batch_idx, (batch, teacher_log_probs_cpu) in enumerate(zip(train_dataloader, teacher_log_probs_cache)):
             # 5.3.1 获取数据并将数据放到和模型相同的设备上
             input_ids, attention_mask, labels = batch
             input_ids = input_ids.to(config.device)
@@ -51,16 +65,13 @@ def distill_model():
             # ① 学生模型前向传播
             student_logits = student_model(input_ids, attention_mask)
             student_labels = torch.argmax(student_logits, dim=-1)
-            # ② 教师模型的前向传播
-            with torch.no_grad():
-                teacher_logits = teacher_model(input_ids, attention_mask)
-                teacher_labels = torch.argmax(teacher_logits, dim=-1)   # 硬标签
             # 5.3.3 计算损失
-            # ① 计算教师模型的和学生模型概率分布
-            teacher_log_probs = F.log_softmax(teacher_logits / T, dim=-1)
+            # ① 使用缓存的 Teacher 软概率，并计算 Student 概率分布
+            teacher_log_probs = teacher_log_probs_cpu.to(config.device)
             student_log_probs = F.log_softmax(student_logits / T, dim=-1)
             # ② 计算硬损失
-            hard_loss = cross_loss_fn(student_log_probs, teacher_labels)
+            # 真实标签提供监督；Teacher 的软分布单独由 KL 蒸馏损失约束。
+            hard_loss = cross_loss_fn(student_logits, labels)
             # ③ 计算软损失(参数1: 学生预测的概率  参数2: 教师预测的概率  参数3: 使用批次平均方式计算损失  参数4: 对softmax结果取对数)
             soft_loss = F.kl_div(student_log_probs, teacher_log_probs, reduction='batchmean', log_target=True)
             # ④ 计算总损失
@@ -94,22 +105,14 @@ def distill_model():
                 # ⑤重置总损失、预测值、真实值
                 total_loss, pred_labels, true_labels = 0.0, [], []
 
-            # 5.5 评估和保存模型(每100个批次或者最后一个批次)
-            if (batch_idx + 1) % 100 == 0 or batch_idx == len(train_dataloader) - 1:
-                # 5.5.1 评估模型
-                report, f1, acc, precision, recall = eval_model(student_model, dev_dataloader, config.device)
-                # 5.5.2 打印评估结果
-                print("验证集评估报告：\n", report)
-                print(f"验证集f1，accuracy, precision, recall: {f1:.4f}, {acc:.4f}, {precision:.4f}, {recall:.4f}")
-                # 5.5.3 保存模型
-                if f1 > best_f1:
-                    # 更新f1值
-                    best_f1 = f1
-                    # 保存模型
-                    torch.save(student_model.state_dict(), config.distilled_model_save_path)
-                    print('❤'*5,'模型保存成功','❤'*5)
-                # 5.5.4 将模型切换回训练模式
-                student_model.train()
+        # 每轮只在验证集评估一次，减少重复评估耗时。
+        report, f1, acc, precision, recall = eval_model(student_model, dev_dataloader, config.device)
+        print("验证集评估报告：\n", report)
+        print(f"验证集f1，accuracy, precision, recall: {f1:.4f}, {acc:.4f}, {precision:.4f}, {recall:.4f}")
+        if f1 > best_f1:
+            best_f1 = f1
+            torch.save(student_model.state_dict(), config.distilled_model_save_path)
+            print('模型保存成功')
 
     print('模型训练完成......')
 
